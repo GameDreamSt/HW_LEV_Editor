@@ -53,6 +53,8 @@ void WriteObjFile(vector<ObjObject> objects, string objFilePath, string textures
 
         for (int i = 0; i < objects.size(); i++)
         {
+            output += "o " + objects[i].name + "\n";
+
             // verts info
             for (int j = 0; j < objects[i].verts.size(); j++)
             {
@@ -69,8 +71,6 @@ void WriteObjFile(vector<ObjObject> objects, string objFilePath, string textures
 
         for (int i = 0; i < objects.size(); i++)
         {
-            output += "o " + objects[i].name + "\n";
-
             if (hasAnyTextures && objects[i].textureFilenames.size() > 0)
             {
                 string name = objects[i].textureFilenames[0];

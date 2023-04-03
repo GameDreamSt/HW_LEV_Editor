@@ -85,6 +85,11 @@ void ReadFace(string str, vector<Vert>& verts, vector<Vector3>& positions, vecto
 		{
 			ss >> one >> two >> three >> four;
 
+			one--;
+			two--;
+			three--;
+			four--;
+
 			verts.push_back(Vert(positions[one], Vector2(), Vector3()));
 			verts.push_back(Vert(positions[two], Vector2(), Vector3()));
 			verts.push_back(Vert(positions[three], Vector2(), Vector3()));

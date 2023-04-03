@@ -50,8 +50,8 @@ void EditorImportLevel()
 {
 	string path;
 	cout << "Drop a file to import the .obj\n";
-	cin >> path;
-
+	cin.ignore();
+	getline(cin, path);
 	EditorImportLevel(path);
 }
 
@@ -123,7 +123,7 @@ int main(int argc, char* argv[])
 			<< "2. Export level to .obj\n"
 			<< "3. Export level to .tga heightmap\n"
 			<< "4. Import level from .obj\n"
-			<< "5. Credits"
+			<< "5. Credits\n"
 			<< "6. Quit\n";
 
 		int choice = -1;
