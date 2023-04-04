@@ -21,10 +21,10 @@ void ImportFromObj(HWTerrain* terr, string path)
 
 	float maxH = -99999;
 	float minH = 99999;
-	for (size_t i = 0; i < terr->width; i++)
-		for (size_t j = 0; j < terr->height; j++)
+	for (size_t i = 0; i < terr->height; i++)
+		for (size_t j = 0; j < terr->width; j++)
 		{
-			TerrainPoint* p = terr->terrainPoints.at(i).at(j);
+			TerrainPoint* p = terr->terrainPoints.at(i * terr->width + j);
 			p->Height = myObj->verts[i * terr->width + j].y * ScaleUp;
 
 			if (p->Height > maxH)

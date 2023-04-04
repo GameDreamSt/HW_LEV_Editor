@@ -115,7 +115,7 @@ void ExportTerrainToLev(HWTerrain& myTerrain, string path)
         for (unsigned long i = 0; i < myTerrain.height; i++)
             for (unsigned long j = 0; j < myTerrain.width; j++)
             {
-                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i).at(j);
+                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i * myTerrain.width + j);
 
                 Point.Height = TPoint.Height;
                 Point.Normal = TPoint.Normal;
@@ -137,7 +137,7 @@ void ExportTerrainToLev(HWTerrain& myTerrain, string path)
         for (unsigned long i = 0; i < myTerrain.height; i++)
             for (unsigned long j = 0; j < myTerrain.width; j++)
             {
-                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i).at(j);
+                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i * myTerrain.width + j);
 
                 Point.Height = TPoint.Height;
                 Point.Normal = TPoint.Normal;
@@ -207,21 +207,21 @@ void ExportTerrainToObj(HWTerrain &myTerrain, string outputFolder, string filena
     vector<Vector3> verts;
     verts.resize(myTerrain.width * (size_t)myTerrain.height);
 
-    for (size_t i = 0; i < myTerrain.width; i++)
-        for (size_t j = 0; j < myTerrain.height; j++)
+    for (size_t i = 0; i < myTerrain.height; i++)
+        for (size_t j = 0; j < myTerrain.width; j++)
         {
-            TerrainPoint* p = myTerrain.terrainPoints.at(i).at(j);
+            TerrainPoint* p = myTerrain.terrainPoints.at(i * myTerrain.width + j);
             verts[i * myTerrain.width + j] = Vector3(i * QuadSize, p->Height * ScaleMod, j * QuadSize);
         }
 
     exportTerrain.verts = verts;
 
-    unsigned long widthSmol = myTerrain.width - 1, heightSmol = myTerrain.width - 1;
+    unsigned long widthSmol = myTerrain.width - 1, heightSmol = myTerrain.height - 1;
 
     vector<Quad> quads;
     quads.resize(widthSmol * (size_t)heightSmol);
-    for (size_t i = 0; i < widthSmol; i++)
-        for (size_t j = 0; j < heightSmol; j++)
+    for (size_t i = 0; i < heightSmol; i++)
+        for (size_t j = 0; j < widthSmol; j++)
         {
             Quad q;
 
@@ -265,7 +265,7 @@ void ExportImage(HWTerrain& myTerrain, string path)
 
     unsigned int width = myTerrain.width, height = myTerrain.height;
 
-    vector<vector<TerrainPoint*>>* terrainPoints = &myTerrain.terrainPoints;
+    vector<TerrainPoint*>* terrainPoints = &myTerrain.terrainPoints;
 
     size_t size = (size_t)width * (size_t)height * (size_t)3;
     vector<unsigned char> pixels;
@@ -275,10 +275,10 @@ void ExportImage(HWTerrain& myTerrain, string path)
     size_t x, y;
 
     unsigned char* p = pixels.data();
-    for (x = 0; x < width; x++)
-        for (y = 0; y < height; y++)
+    for (x = 0; x < height; x++)
+        for (y = 0; y < width; y++)
         {
-            TerrainPoint* point = terrainPoints->at(x).at(y);
+            TerrainPoint* point = terrainPoints->at((height - x - 1) * (width) + y);
 
             *p++ = *p++ = *p++ = (unsigned char)(255 * Remap01(point->Height, myTerrain.LowestPoint, myTerrain.HighestPoint));
         }

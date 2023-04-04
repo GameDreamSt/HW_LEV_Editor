@@ -199,10 +199,8 @@ bool ReadLevFile(std::string path)
 	cursor = myTerrain->TerrainPointDataOffset;
 
 	// Load in the landscape
-	myTerrain->terrainPoints.resize(myTerrain->height);
+	myTerrain->terrainPoints.resize(myTerrain->width * myTerrain->height);
 	for (unsigned long i = 0; i < myTerrain->height; i++)
-	{
-		myTerrain->terrainPoints[i].resize(myTerrain->width);
 		for (unsigned long j = 0; j < myTerrain->width; j++)
 		{
 			TerrainPoint* TPoint = new TerrainPoint();
@@ -217,9 +215,8 @@ bool ReadLevFile(std::string path)
 				break;
 			}
 
-			myTerrain->terrainPoints[i][j] = TPoint;
+			myTerrain->terrainPoints[i * myTerrain->width + j] = TPoint;
 		}
-	}
 
 	if (myTerrain->ObjectListOffset != 0 && myTerrain->ModelListOffset != 0)
 	{

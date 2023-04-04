@@ -172,7 +172,7 @@ public:
 	unsigned long versionID;
 	string versionStr;
 
-	vector<vector<TerrainPoint*>> terrainPoints;
+	vector<TerrainPoint*> terrainPoints;
 	vector<Colour> colours;
 
 	unsigned long TerrainPointDataOffset;
