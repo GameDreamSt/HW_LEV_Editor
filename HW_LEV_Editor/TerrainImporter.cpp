@@ -91,7 +91,9 @@ bool ImportFromTga(HWTerrain* myTerrain, string path)
 	for (size_t i = 0; i < heights.size(); i++)
 	{
 		var = pixelData[i * pixelSize] / 255.0f;
-		heights[i] = RemapFrom01(var, low, high);
+		int x = i % width;
+		int y = i / height;
+		heights[(height - y - 1) * width + x] = RemapFrom01(var, low, high);
 	}
 
 	int terrWidth = myTerrain->width;
