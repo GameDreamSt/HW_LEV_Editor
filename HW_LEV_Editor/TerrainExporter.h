@@ -4,6 +4,7 @@
 #include <LevData.h>
 
 #include <ObjWriter.h>
+#include <TGA_IO.h>
 
 #include <string>
 
@@ -13,5 +14,6 @@ using namespace std;
 #define QuadSize 11.52f
 
 void ExportTerrainToLev(HWTerrain& myTerrain, string path);
-void ExportTerrainToObj(HWTerrain &myTerrain, string path, string filename);
-void ExportImage(HWTerrain& myTerrain, string path);
+void ExportTerrainToObj(HWTerrain &myTerrain, string path, string filename, string textureFile);
+void ExportImageHeight(HWTerrain& myTerrain, string path);
+void ExportImageTiles(HWTerrain& myTerrain, string path);

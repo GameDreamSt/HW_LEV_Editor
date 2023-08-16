@@ -115,7 +115,7 @@ void ExportTerrainToLev(HWTerrain& myTerrain, string path)
         for (unsigned long i = 0; i < myTerrain.height; i++)
             for (unsigned long j = 0; j < myTerrain.width; j++)
             {
-                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i * myTerrain.width + j);
+                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i * (size_t)myTerrain.width + j);
 
                 Point.Height = TPoint.Height;
                 Point.Normal = TPoint.Normal;
@@ -137,7 +137,7 @@ void ExportTerrainToLev(HWTerrain& myTerrain, string path)
         for (unsigned long i = 0; i < myTerrain.height; i++)
             for (unsigned long j = 0; j < myTerrain.width; j++)
             {
-                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i * myTerrain.width + j);
+                TerrainPoint TPoint = *myTerrain.terrainPoints.at(i * (size_t)myTerrain.width + j);
 
                 Point.Height = TPoint.Height;
                 Point.Normal = TPoint.Normal;
@@ -157,28 +157,28 @@ void ExportTerrainToLev(HWTerrain& myTerrain, string path)
     }
 
     fwrite(myTerrain.objectListData.data(), sizeof(char), myTerrain.objectListData.size(), f);
-    offset += myTerrain.objectListData.size();
+    offset += (unsigned long)myTerrain.objectListData.size();
     if (myTerrain.versionID == LEVEL0_4CC)
         Head0.ModelListOffset = offset;
     else
         Head1.ModelListOffset = offset;
     
     fwrite(myTerrain.modelListData.data(), sizeof(char), myTerrain.modelListData.size(), f);
-    offset += myTerrain.modelListData.size();
+    offset += (unsigned long)myTerrain.modelListData.size();
     if (myTerrain.versionID == LEVEL0_4CC)
         Head0.LandPaletteOffset = offset;
     else
         Head1.LandPaletteOffset = offset;
 
     fwrite(myTerrain.colours.data(), sizeof(Colour), myTerrain.colours.size(), f);
-    offset += sizeof(Colour) * myTerrain.colours.size();
+    offset += (unsigned long)(sizeof(Colour) * myTerrain.colours.size());
     if (myTerrain.versionID == LEVEL0_4CC)
         Head0.LevelConfigOffset = offset;
     else
         Head1.LevelConfigOffset = offset;
 
     fwrite(myTerrain.configData.data(), sizeof(char), myTerrain.configData.size(), f);
-    offset += myTerrain.configData.size();
+    offset += (unsigned long)myTerrain.configData.size();
 
     if (myTerrain.versionID == LEVEL0_4CC)
     {
@@ -198,7 +198,122 @@ void ExportTerrainToLev(HWTerrain& myTerrain, string path)
     fclose(f);
 }
 
-void ExportTerrainToObj(HWTerrain &myTerrain, string outputFolder, string filename)
+class QuadTexIds
+{
+public:
+    int a, b, c, d;
+    QuadTexIds() { a = 0; b = 0; c = 0; d = 0; }
+};
+
+#define Q00 (int)(y * (size_t)lineSizeBigger + 1 + x)
+#define Q01 (int)(y * (size_t)lineSizeBigger + (size_t)2 + x)
+#define Q10 (int)(y * (size_t)lineSizeBigger + lineSize + (size_t)2 + x)
+#define Q11 (int)(y * (size_t)lineSizeBigger + lineSize + (size_t)3 + x)
+
+void GenerateTextureVerts(int amountOfMats, vector<pair<float, float>> &texVerts, vector<QuadTexIds> &quadTexIds)
+{
+    int lineSize = 10;
+    int lineSizeBigger = lineSize + 1;
+    int matLines = amountOfMats / lineSize;
+    int matRemain = amountOfMats - matLines * lineSize;
+    int allMatLines = 0;
+
+    int texVertAmount = 0;
+    if (matLines > 0)
+    {
+        texVertAmount = lineSizeBigger + matLines * lineSizeBigger;
+        allMatLines = matLines;
+    }
+
+    if (matRemain > 0)
+    {
+        allMatLines++;
+        if (texVertAmount == 0)
+            texVertAmount = (matRemain + 1) * 2;
+        else
+            texVertAmount += (matRemain + 1);
+    }
+
+    texVerts.resize(texVertAmount);
+
+    for (int i = 0; i < texVertAmount; i++)
+    {
+        int x = i % lineSizeBigger;
+        int y = i / lineSizeBigger;
+
+        texVerts.at(i).first = x / (float)(lineSize);
+        texVerts.at(i).second = 1 - y / (float)allMatLines;
+    }
+
+    if (allMatLines == 0)
+        return;
+
+    quadTexIds.resize(amountOfMats * 8); // 8 rotations
+
+    for (int i = 0; i < quadTexIds.size(); i++)
+    {
+        int rot = i / amountOfMats;
+        int I = i % amountOfMats;
+
+        int x = I % lineSize;
+        int y = I / lineSize;
+
+        switch (rot)
+        {
+            default:
+            case 0:
+                quadTexIds[i].a = Q00;
+                quadTexIds[i].b = Q10;
+                quadTexIds[i].c = Q01;
+                quadTexIds[i].d = Q11;
+                break;
+            case 1:
+                quadTexIds[i].a = Q01; // Q10
+                quadTexIds[i].b = Q00; // Q11
+                quadTexIds[i].c = Q11; // Q00
+                quadTexIds[i].d = Q10; // Q01
+                break;
+            case 2:
+                quadTexIds[i].a = Q11;
+                quadTexIds[i].b = Q01;
+                quadTexIds[i].c = Q10;
+                quadTexIds[i].d = Q00;
+                break;
+            case 3:
+                quadTexIds[i].a = Q10; // Q01
+                quadTexIds[i].b = Q11; // Q00
+                quadTexIds[i].c = Q00; // Q11
+                quadTexIds[i].d = Q01; // Q10
+                break;
+            case 4:
+                quadTexIds[i].a = Q01; // Q00
+                quadTexIds[i].b = Q11; // Q01
+                quadTexIds[i].c = Q00; // Q10
+                quadTexIds[i].d = Q10; // Q11
+                break;
+            case 5:
+                quadTexIds[i].a = Q11;
+                quadTexIds[i].b = Q10;
+                quadTexIds[i].c = Q01;
+                quadTexIds[i].d = Q00;
+                break;
+            case 6:
+                quadTexIds[i].a = Q10;
+                quadTexIds[i].b = Q00;
+                quadTexIds[i].c = Q11;
+                quadTexIds[i].d = Q01;
+                break;
+            case 7:
+                quadTexIds[i].a = Q00;
+                quadTexIds[i].b = Q01;
+                quadTexIds[i].c = Q10;
+                quadTexIds[i].d = Q11;
+                break;
+        }
+    }
+}
+
+void ExportTerrainToObj(HWTerrain &myTerrain, string outputFolder, string filename, string textureFile)
 {
     ObjObject exportTerrain;
 
@@ -207,14 +322,21 @@ void ExportTerrainToObj(HWTerrain &myTerrain, string outputFolder, string filena
     vector<Vector3> verts;
     verts.resize(myTerrain.width * (size_t)myTerrain.height);
 
+    int materialCount = 0;
     for (size_t i = 0; i < myTerrain.height; i++)
         for (size_t j = 0; j < myTerrain.width; j++)
         {
             TerrainPoint* p = myTerrain.terrainPoints.at(i * myTerrain.width + j);
+            if (p->Mat > materialCount)
+                materialCount = p->Mat;
             verts[i * myTerrain.width + j] = Vector3(i * QuadSize, p->Height * ScaleMod, j * QuadSize);
         }
+    materialCount++; // Because of 0 mat
 
     exportTerrain.verts = verts;
+
+    vector<QuadTexIds> quadTexIds;
+    GenerateTextureVerts(materialCount, exportTerrain.texVerts, quadTexIds);
 
     unsigned long widthSmol = myTerrain.width - 1, heightSmol = myTerrain.height - 1;
 
@@ -230,19 +352,24 @@ void ExportTerrainToObj(HWTerrain &myTerrain, string outputFolder, string filena
             q.vertIds[2] = (int)(i * myTerrain.width + myTerrain.width + (size_t)1 + j);
             q.vertIds[3] = (int)(i * myTerrain.width + myTerrain.width + (size_t)2 + j);
 
+            TerrainPoint* p = myTerrain.terrainPoints.at(i * myTerrain.width + j);
+
+            int* ptr = &q.texVertIds[0];
+            memcpy(ptr, &quadTexIds.at(p->Mat + materialCount * p->TextureDir), sizeof(QuadTexIds));
+
             quads[i * widthSmol + j] = q;
         }
 
     exportTerrain.quads = quads;
 
-    vector<ObjObject> objects;
-    objects.push_back(exportTerrain);
+    if(textureFile != "")
+        exportTerrain.textureFilenames.push_back(textureFile);
 
     string outputFilepath;
     if (outputFolder != "")
         outputFilepath = outputFolder + "\\"  + filename + ".obj";
 
-    WriteObjFile(objects, outputFilepath, "");
+    WriteObjFile(exportTerrain, filename, outputFilepath, "");
 }
 
 float Remap01(float value, float low1, float high1)
@@ -250,9 +377,79 @@ float Remap01(float value, float low1, float high1)
     return (value - low1) / (high1 - low1);
 }
 
-void ExportImage(HWTerrain& myTerrain, string path)
+void ExportImageHeight(HWTerrain& myTerrain, string path)
 {
-    path += ".tga";
+    path += "_height.tga";
+
+    unsigned int width = myTerrain.width, height = myTerrain.height;
+
+    vector<TerrainPoint*>* terrainPoints = &myTerrain.terrainPoints;
+
+    size_t size = (size_t)width * (size_t)height;
+    vector<unsigned char> pixels;
+    pixels.resize(size);
+
+    unsigned char* p = pixels.data();
+    for (size_t x = 0; x < height; x++)
+        for (size_t y = 0; y < width; y++)
+        {
+            TerrainPoint* point = terrainPoints->at((height - x - 1) * (width)+y);
+            *p++ =(unsigned char)(255 * Remap01(point->Height, myTerrain.LowestPoint, myTerrain.HighestPoint));
+        }
+
+    bool success = TGA_IO::WriteTGA(path, width, height, pixels);
+}
+
+class Colour255
+{
+public:
+    unsigned char r, g, b;
+
+    Colour255() { r = 0; g = 0; b = 0; }
+    Colour255(unsigned char R, unsigned char G, unsigned char B){ r = R; g = G; b = B; }
+
+    static Colour255 black, white, red, green, blue, orange, yellow, cyan, purple, pink, 
+        lime, darkRed, darkLime, darkGreen, darkBlue, darkOrange, darkYellow, darkCyan, darkPurple, darkPink;
+};
+
+Colour255 Colour255::black = Colour255(0, 0, 0);
+Colour255 Colour255::white = Colour255(255, 255, 255);
+Colour255 Colour255::red = Colour255(255, 0, 0);
+Colour255 Colour255::lime = Colour255(136, 255, 0);
+Colour255 Colour255::green = Colour255(0, 255, 0);
+Colour255 Colour255::blue = Colour255(0, 0, 255);
+Colour255 Colour255::orange = Colour255(255, 128, 0);
+Colour255 Colour255::yellow = Colour255(255, 256, 0);
+Colour255 Colour255::cyan = Colour255(0, 255, 255);
+Colour255 Colour255::purple = Colour255(128, 0, 255);
+Colour255 Colour255::pink = Colour255(255, 0, 255);
+
+Colour255 Colour255::darkRed = Colour255(128, 0, 0);
+Colour255 Colour255::darkLime = Colour255(136, 128, 0);
+Colour255 Colour255::darkGreen = Colour255(0, 128, 0);
+Colour255 Colour255::darkBlue = Colour255(0, 0, 128);
+Colour255 Colour255::darkOrange = Colour255(128, 128, 0);
+Colour255 Colour255::darkYellow = Colour255(128, 128, 0);
+Colour255 Colour255::darkCyan = Colour255(0, 128, 128);
+Colour255 Colour255::darkPurple = Colour255(128, 0, 128);
+Colour255 Colour255::darkPink = Colour255(128, 0, 128);
+
+Colour255 mapCols[] = { Colour255::black, Colour255::red, Colour255::green, Colour255::blue,
+Colour255::orange, Colour255::yellow, Colour255::cyan, Colour255::purple, Colour255::pink, Colour255::lime, Colour255::darkRed, 
+Colour255::darkLime, Colour255::darkGreen , Colour255::darkBlue , Colour255::darkOrange , Colour255::darkYellow , Colour255::darkCyan,
+Colour255::darkPurple , Colour255::darkPink,  Colour255::white };
+
+Colour255 MatToCol(int mat)
+{
+    if (mat >= 20 || mat < 0)
+        return Colour255::white;
+
+    return mapCols[mat];
+}
+
+void ExportImageTiles(HWTerrain& myTerrain, string path)
+{
+    path += "_tiles.tga";
 
     FILE* write;
     errno_t err = fopen_s(&write, path.c_str(), "wb");
@@ -278,9 +475,11 @@ void ExportImage(HWTerrain& myTerrain, string path)
     for (x = 0; x < height; x++)
         for (y = 0; y < width; y++)
         {
-            TerrainPoint* point = terrainPoints->at((height - x - 1) * (width) + y);
+            TerrainPoint* point = terrainPoints->at((height - x - 1) * (width)+y);
 
-            *p++ = *p++ = *p++ = (unsigned char)(255 * Remap01(point->Height, myTerrain.LowestPoint, myTerrain.HighestPoint));
+            Colour255 col = MatToCol(point->Mat);
+            memcpy(p, &col, 3);
+            p += 3;
         }
 
     tga[2] = 2;

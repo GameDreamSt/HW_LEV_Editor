@@ -8,5 +8,4 @@
 
 using namespace std;
 
-bool HasAnyTextures(vector<ObjObject>& objects);
-void WriteObjFile(vector<ObjObject> objects, string objFilePath, string texturesFilepath);
+void WriteObjFile(ObjObject &objects, string filename, string objFilePath, string texturesFilepath);

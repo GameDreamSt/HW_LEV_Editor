@@ -1,8 +1,6 @@
 
 #include <LevReader.h>
 
-HWTerrain* myTerrain;
-
 bool ReadAllBytes(string filePath, vector<unsigned char>& data)
 {
 	ifstream ifs(filePath, ios::binary | ios::ate);
@@ -154,7 +152,10 @@ bool ReadLevFile(std::string path)
 		return false;
 	}
 
-	myTerrain = new HWTerrain();
+	if (HWTerrain::myTerrain != nullptr)
+		delete HWTerrain::myTerrain;
+	HWTerrain::myTerrain = new HWTerrain();
+	HWTerrain* myTerrain = HWTerrain::myTerrain;
 
 	unsigned long cursor = 0;
 	unsigned long id = myTerrain->versionID = *(unsigned long*)&allData[0];
@@ -199,7 +200,8 @@ bool ReadLevFile(std::string path)
 	cursor = myTerrain->TerrainPointDataOffset;
 
 	// Load in the landscape
-	myTerrain->terrainPoints.resize(myTerrain->width * myTerrain->height);
+	int materialCount = 0;
+	myTerrain->terrainPoints.resize(myTerrain->width * (size_t)myTerrain->height);
 	for (unsigned long i = 0; i < myTerrain->height; i++)
 		for (unsigned long j = 0; j < myTerrain->width; j++)
 		{
@@ -215,13 +217,42 @@ bool ReadLevFile(std::string path)
 				break;
 			}
 
-			myTerrain->terrainPoints[i * myTerrain->width + j] = TPoint;
+			if (TPoint->Mat > materialCount)
+				materialCount = TPoint->Mat;
+
+			myTerrain->terrainPoints[i * (size_t)myTerrain->width + j] = TPoint;
+		}
+	materialCount++;
+	myTerrain->materialCount = materialCount;
+
+	for (unsigned long i = 0; i < myTerrain->height - 1; i++)
+		for (unsigned long j = 0; j < myTerrain->width - 1; j++)
+		{
+			TerrainPoint* TPoint = myTerrain->terrainPoints[i * (size_t)myTerrain->width + j];
+
+			int NoBlendMat = (TPoint->Flags & 0x600) >> 9; // TP_NOBLENDMASK TP_NOBLENDSHIFT
+			break;
+			switch (NoBlendMat)
+			{
+			case 0:
+				TPoint->Mat = myTerrain->terrainPoints[i * (size_t)myTerrain->width + j]->Mat;
+				break;
+			case 1:
+				TPoint->Mat = myTerrain->terrainPoints[(i+1) * (size_t)myTerrain->width + j]->Mat;
+				break;
+			case 2:
+				TPoint->Mat = myTerrain->terrainPoints[i * (size_t)myTerrain->width + j + 1]->Mat;
+				break;
+			case 3:
+				TPoint->Mat = myTerrain->terrainPoints[(i + 1) * (size_t)myTerrain->width + j + 1]->Mat;
+				break;
+			}
 		}
 
 	if (myTerrain->ObjectListOffset != 0 && myTerrain->ModelListOffset != 0)
 	{
 		cursor = myTerrain->ObjectListOffset;
-		size_t listSize = myTerrain->ModelListOffset - myTerrain->ObjectListOffset;
+		size_t listSize = myTerrain->ModelListOffset - (size_t)myTerrain->ObjectListOffset;
 		myTerrain->objectListData.resize(listSize);
 		memcpy(myTerrain->objectListData.data(), &allData[cursor], listSize);
 	}
@@ -229,7 +260,7 @@ bool ReadLevFile(std::string path)
 	if (myTerrain->ModelListOffset != 0 && myTerrain->LandPaletteOffset != 0)
 	{
 		cursor = myTerrain->ModelListOffset;
-		size_t listSize = myTerrain->LandPaletteOffset - myTerrain->ModelListOffset;
+		size_t listSize = myTerrain->LandPaletteOffset - (size_t)myTerrain->ModelListOffset;
 		myTerrain->modelListData.resize(listSize);
 		memcpy(myTerrain->modelListData.data(), &allData[cursor], listSize);
 	}
@@ -248,22 +279,10 @@ bool ReadLevFile(std::string path)
 	if (myTerrain->LevelConfigOffset != 0 && myTerrain->EndOfLastBit != 0)
 	{
 		cursor = myTerrain->LevelConfigOffset;
-		size_t listSize = myTerrain->EndOfLastBit - myTerrain->LevelConfigOffset;
+		size_t listSize = myTerrain->EndOfLastBit - (size_t)myTerrain->LevelConfigOffset;
 		myTerrain->configData.resize(listSize);
 		memcpy(myTerrain->configData.data(), &allData[cursor], listSize);
 	}
 
 	return true;
-}
-
-HWTerrain* GetHWTerrain()
-{
-	return myTerrain;
-}
-
-void SetHWTerrain(HWTerrain* terr)
-{
-	if (myTerrain != nullptr)
-		delete myTerrain;
-	myTerrain = terr;
 }

@@ -4,6 +4,7 @@
 #include <LevData.h>
 
 #include <ModelLoader.h>
+#include <TGA_IO.h>
 
 #include <string>
 
@@ -14,4 +15,4 @@ using namespace std;
 #define QuadSize 11.52f
 
 void ImportFromObj(HWTerrain* myTerrain, string path);
-void ImportFromTga(HWTerrain* myTerrain, string path);
+bool ImportFromTga(HWTerrain* myTerrain, string path);

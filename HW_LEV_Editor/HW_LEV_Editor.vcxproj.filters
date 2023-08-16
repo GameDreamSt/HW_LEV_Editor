@@ -45,6 +45,12 @@
     <ClCompile Include="LevData.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="RokReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TGA_IO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Files.h">
@@ -72,6 +78,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ModelLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RokReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TGA_IO.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

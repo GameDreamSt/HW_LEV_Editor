@@ -116,6 +116,30 @@ public:
 	}
 };
 
+class StrataLayer
+{
+public:
+	vector<unsigned char> matList;
+
+	unsigned long x, z;
+
+	float depth;
+	float resilience; // 100.0f hard  ----  1.0f soft
+
+	StrataLayer();
+	StrataLayer(float LayerDepth);
+	StrataLayer(float LayerDepth, const unsigned char Mat);
+};
+
+class StrataLayerList
+{
+public:
+	vector<StrataLayer> layerList;
+
+	unsigned long layerCount;
+	float maxDepth;
+};
+
 class TerrainPoint
 {
 public:
@@ -169,11 +193,16 @@ public:
 	HWTerrain();
 	~HWTerrain();
 
+	static HWTerrain* myTerrain;
+
 	unsigned long versionID;
 	string versionStr;
 
 	vector<TerrainPoint*> terrainPoints;
 	vector<Colour> colours;
+
+	int materialCount;
+	vector<StrataLayerList> strataLayers;
 
 	unsigned long TerrainPointDataOffset;
 	unsigned long width;
