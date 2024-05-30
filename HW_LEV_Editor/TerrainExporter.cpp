@@ -397,7 +397,13 @@ void ExportImageHeight(HWTerrain& myTerrain, string path)
             *p++ =(unsigned char)(255 * Remap01(point->Height, myTerrain.LowestPoint, myTerrain.HighestPoint));
         }
 
-    bool success = TGA_IO::WriteTGA(path, width, height, pixels);
+    TGAParams tgaParams;
+    tgaParams.path = path;
+    tgaParams.width = width;
+    tgaParams.height = height;
+    tgaParams.imageType = TGAImageType::UncompressedGrayscale;
+    tgaParams.data = &pixels;
+    bool success = TGA_IO::WriteTGA(tgaParams);
 }
 
 class Colour255
@@ -419,7 +425,7 @@ Colour255 Colour255::lime = Colour255(136, 255, 0);
 Colour255 Colour255::green = Colour255(0, 255, 0);
 Colour255 Colour255::blue = Colour255(0, 0, 255);
 Colour255 Colour255::orange = Colour255(255, 128, 0);
-Colour255 Colour255::yellow = Colour255(255, 256, 0);
+Colour255 Colour255::yellow = Colour255(255, 255, 0);
 Colour255 Colour255::cyan = Colour255(0, 255, 255);
 Colour255 Colour255::purple = Colour255(128, 0, 255);
 Colour255 Colour255::pink = Colour255(255, 0, 255);
@@ -447,18 +453,9 @@ Colour255 MatToCol(int mat)
     return mapCols[mat];
 }
 
-void ExportImageTiles(HWTerrain& myTerrain, string path)
+bool ExportImageTiles(HWTerrain& myTerrain, string path)
 {
     path += "_tiles.tga";
-
-    FILE* write;
-    errno_t err = fopen_s(&write, path.c_str(), "wb");
-
-    if (write == nullptr)
-    {
-        cout << "Failed to open/create the file";
-        return;
-    }
 
     unsigned int width = myTerrain.width, height = myTerrain.height;
 
@@ -468,7 +465,6 @@ void ExportImageTiles(HWTerrain& myTerrain, string path)
     vector<unsigned char> pixels;
     pixels.resize(size);
 
-    unsigned char tga[18]{};
     size_t x, y;
 
     unsigned char* p = pixels.data();
@@ -477,21 +473,19 @@ void ExportImageTiles(HWTerrain& myTerrain, string path)
         {
             TerrainPoint* point = terrainPoints->at((height - x - 1) * (width)+y);
 
-            Colour255 col = MatToCol(point->Mat);
+            //Colour255 col = MatToCol(point->Mat);
+
+            Colour255 col = Colour255(0, point->TextureDir, point->Mat); // BGR
             memcpy(p, &col, 3);
             p += 3;
         }
+   
+    TGAParams params;
+    params.path = path;
+    params.width = width;
+    params.height = height;
+    params.imageType = TGAImageType::UncompressedTrueColor;
+    params.data = &pixels;
 
-    tga[2] = 2;
-    tga[12] = 255 & width;
-    tga[13] = 255 & (width >> 8);
-    tga[14] = 255 & height;
-    tga[15] = 255 & (height >> 8);
-    tga[16] = 24;
-    tga[17] = 32;
-
-    fwrite(tga, sizeof(unsigned char), 18, write);
-    fwrite(pixels.data(), sizeof(unsigned char), size, write);
-
-    fclose(write);
+    return TGA_IO::WriteTGA(params);
 }

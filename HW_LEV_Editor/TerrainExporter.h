@@ -16,4 +16,4 @@ using namespace std;
 void ExportTerrainToLev(HWTerrain& myTerrain, string path);
 void ExportTerrainToObj(HWTerrain &myTerrain, string path, string filename, string textureFile);
 void ExportImageHeight(HWTerrain& myTerrain, string path);
-void ExportImageTiles(HWTerrain& myTerrain, string path);
+bool ExportImageTiles(HWTerrain& myTerrain, string path);

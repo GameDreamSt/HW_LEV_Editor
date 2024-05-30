@@ -54,9 +54,16 @@ bool ImportFromTga(HWTerrain* myTerrain, string path)
 		return false;
 	}
 
-	unsigned int width, height, pixelSize;
+	unsigned int width = 0, height = 0, pixelSize = 0;
 
-	bool success = TGA_IO::ReadTGA(path, width, height, pixelSize, pixelData);
+	TGAParams tgaParams;
+	tgaParams.path = path;
+	tgaParams.width = width;
+	tgaParams.height = height;
+	tgaParams.imageType = TGAImageType::UncompressedGrayscale;
+	tgaParams.data = &pixelData;
+
+	bool success = TGA_IO::ReadTGA(tgaParams);
 	if (!success)
 	{
 		pixelData.clear();
