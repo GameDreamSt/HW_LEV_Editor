@@ -225,28 +225,36 @@ bool ReadLevFile(std::string path)
 	materialCount++;
 	myTerrain->materialCount = materialCount;
 
-	for (unsigned long i = 0; i < myTerrain->height - 1; i++)
-		for (unsigned long j = 0; j < myTerrain->width - 1; j++)
+	size_t pIndex;
+	for (size_t i = 0; i < myTerrain->height - 1; i++)
+		for (size_t j = 0; j < myTerrain->width - 1; j++)
 		{
-			TerrainPoint* TPoint = myTerrain->terrainPoints[i * (size_t)myTerrain->width + j];
+			pIndex = i * (size_t)myTerrain->width + j;
+			TerrainPoint* TPoint = myTerrain->terrainPoints[pIndex];
+
+			if (!(TPoint->Flags & 64)) // TP_NOBLEND
+				continue;
 
 			int NoBlendMat = (TPoint->Flags & 0x600) >> 9; // TP_NOBLENDMASK TP_NOBLENDSHIFT
-			break;
+
 			switch (NoBlendMat)
 			{
 			case 0:
-				TPoint->Mat = myTerrain->terrainPoints[i * (size_t)myTerrain->width + j]->Mat;
+				pIndex = i * (size_t)myTerrain->width + j;
 				break;
 			case 1:
-				TPoint->Mat = myTerrain->terrainPoints[(i+1) * (size_t)myTerrain->width + j]->Mat;
+				pIndex = (i + 1) * (size_t)myTerrain->width + j;
 				break;
 			case 2:
-				TPoint->Mat = myTerrain->terrainPoints[i * (size_t)myTerrain->width + j + 1]->Mat;
+				pIndex = i * (size_t)myTerrain->width + j + 1;
 				break;
 			case 3:
-				TPoint->Mat = myTerrain->terrainPoints[(i + 1) * (size_t)myTerrain->width + j + 1]->Mat;
+				pIndex = (i + 1) * (size_t)myTerrain->width + j + 1;
 				break;
 			}
+
+			TPoint->Mat = myTerrain->terrainPoints[pIndex]->Mat;
+			continue;
 		}
 
 	if (myTerrain->ObjectListOffset != 0 && myTerrain->ModelListOffset != 0)
