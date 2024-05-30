@@ -22,11 +22,20 @@ enum TGAImageType
 
 struct TGAParams
 {
+public:
     string path;
     unsigned int width;
     unsigned int height;
     TGAImageType imageType;
     vector<unsigned char> *data;
+
+    TGAParams()
+    {
+        path = "";
+        height = width = 0;
+        imageType = TGAImageType::NoData;
+        data = nullptr;
+    }
 };
 
 class TGA_IO

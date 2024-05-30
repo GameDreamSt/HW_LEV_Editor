@@ -13,6 +13,35 @@ using namespace std;
 
 bool needsToSave = false;
 
+string AskForAFile(string askText)
+{
+	string path = "";
+	cout << askText << ":\n";
+	cin.ignore();
+	getline(cin, path);
+	return RemoveQuotes(path);
+}
+
+void EditorImportPalette()
+{
+	string filePath = AskForAFile("Drop a 16x16 .tga file");
+
+	if (ImportPaletteFromImage(filePath))
+	{
+		cout << "Palette import success!\n";
+		needsToSave = true;
+	}
+
+	system("pause");
+}
+
+void EditorExportPalette(string filePath)
+{
+	if (ExportPaletteToImage(filePath))
+		cout << "Palette to .tga Export complete\n";
+	system("pause");
+}
+
 void EditorExportLevelToLev(string path)
 {
 	string dir = RemovePathLast(path);
@@ -179,35 +208,48 @@ int main(int argc, char* argv[])
 			cout << "Don't forget to save!\n\n";
 
 		cout << "Curently editing " << file << '\n'
-			<< "What would you like to do?\n"
-			<< "1. Export level to .lev\n"
-			<< "2. Export level to .obj\n"
-			<< "3. Export level to .tga heightmap\n"
-			<< "4. Export level to .tga tilemap (just for show)\n"
-			<< "5. Import level from .obj\n"
-			<< "6. Import strata info from .rok (not used right now)\n"
+			<< "What would you like to do?\n\n"
+
+			<< "1. Export to .lev\n"
+			<< "2. Export to .obj\n"
+			<< "3. Export heightmap to .tga\n"
+			<< "4. Export tilemap to .tga (just for show)\n"
+			<< "5. Export palette to .tga\n\n"
+
+			<< "6. Modify terrain with .obj\n"
 			<< "7. Modify terrain with .tga heightmap\n"
-			<< "8. Credits\n"
-			<< "9. Quit\n";
+			<< "8. Import strata info from .rok (not used right now)\n"
+			<< "9. Import palette from .tga\n\n"
+
+			<< "9. Credits\n"
+			<< "10. Quit\n";
 
 		int choice = -1;
 		cin >> choice;
+
+		string filePath = RemovePathLast(path) + "\\" + RemoveExtension(GetFileName(path));
 
 		if (choice == 1)
 			EditorExportLevelToLev(path);
 		else if (choice == 2)
 			EditorExportLevelToObj(RemovePathLast(path), RemoveExtension(file));
 		else if (choice == 3)
-			EditorExportLevelImageHeight(RemovePathLast(path) + "\\" + RemoveExtension(GetFileName(path)));
+			EditorExportLevelImageHeight(filePath);
 		else if (choice == 4)
-			ExportLevelImageTiles(RemovePathLast(path) + "\\" + RemoveExtension(GetFileName(path)));
+			ExportLevelImageTiles(filePath);
 		else if (choice == 5)
-			EditorImportLevel();
+			EditorExportPalette(filePath);
+
 		else if (choice == 6)
-			EditorImportStrata();
+			EditorImportLevel();
 		else if (choice == 7)
 			EditorImportLevelImageHeight();
 		else if (choice == 8)
+			EditorImportStrata();
+		else if (choice == 9)
+			EditorImportPalette();
+
+		else if (choice == 10)
 			PrintCredits();
 		else
 			editing = false;

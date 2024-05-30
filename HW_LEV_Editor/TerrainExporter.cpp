@@ -1,6 +1,12 @@
 
 #include <TerrainExporter.h>
 
+#include <LevReader.h>
+#include <LevData.h>
+
+#include <ObjWriter.h>
+#include <TGA_IO.h>
+
 unsigned short ConvertFlagsToMyFlags(unsigned short Flags)
 {
     unsigned short MyFlags = 0;
@@ -120,7 +126,7 @@ void ExportTerrainToLev(HWTerrain& myTerrain, string path)
                 Point.Height = TPoint.Height;
                 Point.Normal = TPoint.Normal;
                 Point.Mat = TPoint.Mat;
-                Point.Flags = ConvertFlagsToMyFlags(TPoint.Flags);
+                Point.Flags = (unsigned char)ConvertFlagsToMyFlags(TPoint.Flags);
                 Point.PaletteIndex = TPoint.PaletteIndex;
                 Point.FlowDirection = TPoint.FlowDirection;
                 Point.StrataIndex = TPoint.StrataIndex;
@@ -484,6 +490,45 @@ bool ExportImageTiles(HWTerrain& myTerrain, string path)
     params.path = path;
     params.width = width;
     params.height = height;
+    params.imageType = TGAImageType::UncompressedTrueColor;
+    params.data = &pixels;
+
+    return TGA_IO::WriteTGA(params);
+}
+
+bool ExportPaletteToImage(string filePath)
+{
+    size_t size = 256ull * 3ull;
+    vector<unsigned char> pixels;
+    pixels.resize(size);
+    unsigned char* p = pixels.data();
+
+    HWTerrain* terrain = HWTerrain::myTerrain;
+
+    if (terrain == nullptr)
+    {
+        cout << "Error! Terrain is not loaded!\n";
+        return false;
+    }
+
+    vector<Colour>* colours = &terrain->colours;
+
+    unsigned char tempColourData[3]{};
+    Colour tempCol;
+    for (size_t i = 0; i < colours->size(); i++)
+    {
+        tempCol = colours->at(i);
+        tempColourData[0] = (unsigned char)(tempCol.x * 255);
+        tempColourData[1] = (unsigned char)(tempCol.y * 255);
+        tempColourData[2] = (unsigned char)(tempCol.z * 255);
+        memcpy(p, &tempColourData, sizeof(unsigned char) * 3);
+        p += 3;
+    }
+
+    TGAParams params;
+    params.path = filePath;
+    params.width = 16;
+    params.height = 16;
     params.imageType = TGAImageType::UncompressedTrueColor;
     params.data = &pixels;
 

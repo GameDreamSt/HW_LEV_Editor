@@ -168,8 +168,18 @@ bool TGA_IO::ReadTGA(TGAParams& params)
     return true;
 }
 
+void CheckExtension(TGAParams& params)
+{
+    string path = params.path;
+    if (path.length() >= 4 && path[path.length() - 4] != '.')
+        path += ".tga";
+    params.path = path;
+}
+
 bool TGA_IO::WriteTGA(TGAParams& params)
 {
+    CheckExtension(params);
+
     FILE* write;
     errno_t err = fopen_s(&write, params.path.c_str(), "wb");
 

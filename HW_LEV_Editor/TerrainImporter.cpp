@@ -1,6 +1,12 @@
 
 #include <TerrainImporter.h>
 
+#include <LevReader.h>
+#include <LevData.h>
+
+#include <ModelLoader.h>
+#include <TGA_IO.h>
+
 void ImportFromObj(HWTerrain* terr, string path)
 {
 	vector<ObjObject*> objs = LoadModelsFromFile(path);
@@ -73,8 +79,8 @@ bool ImportFromTga(HWTerrain* myTerrain, string path)
 	float low = myTerrain->LowestPoint;
 	float high = myTerrain->HighestPoint;
 
-	int lowMeter = low / 51.2f;
-	int highMeter = high / 51.2f;
+	int lowMeter = (int)(low / 51.2f);
+	int highMeter = (int)(high / 51.2f);
 
 	string choice = "";
 	cout << "Use terrain's lowest and highest height points? [Y/N]\n";
@@ -106,14 +112,14 @@ bool ImportFromTga(HWTerrain* myTerrain, string path)
 	int terrWidth = myTerrain->width;
 	int terrHeight = myTerrain->height;
 
-	float widthRatio = width / myTerrain->width;
-	float heightRatio = height / myTerrain->height;
+	float widthRatio = width / (float)myTerrain->width;
+	float heightRatio = height / (float)myTerrain->height;
 
 	vector<TerrainPoint*>* points = &myTerrain->terrainPoints;
 	for (size_t i = 0; i < points->size(); i++)
 	{
-		int px = i % terrWidth;
-		int py = i / terrWidth;
+		size_t px = i % terrWidth;
+		size_t py = i / terrWidth;
 		int x = lroundf(px * widthRatio);
 		int y = lroundf(py * heightRatio);
 		points->at(py * terrWidth + px)->Height = heights[y * width + x];
@@ -121,5 +127,49 @@ bool ImportFromTga(HWTerrain* myTerrain, string path)
 
 	heights.clear();
 	pixelData.clear();
+	return true;
+}
+
+bool ImportPaletteFromImage(string filepath)
+{
+	HWTerrain* terrain = HWTerrain::myTerrain;
+
+	if (terrain == nullptr)
+	{
+		cout << "Error! Missing terrain!";
+		return false;
+	}
+
+	vector<unsigned char> pixels;
+	pixels.resize(256 * 3);
+
+	TGAParams params;
+	params.path = filepath;
+	params.width = 16;
+	params.height = 16;
+	params.imageType = TGAImageType::UncompressedTrueColor;
+	params.data = &pixels;
+
+	if (!TGA_IO::ReadTGA(params))
+		return false;
+
+	unsigned char* p = pixels.data();
+
+	vector<Colour>* colours = &terrain->colours;
+
+	unsigned char tempColourData[3]{};
+	Colour tempCol{};
+	for (size_t i = 0; i < colours->size(); i++)
+	{
+		memcpy(&tempColourData, p, sizeof(unsigned char) * 3);
+		p += 3;
+
+		tempCol.x = tempColourData[0] / 255.0f;
+		tempCol.y = tempColourData[1] / 255.0f;
+		tempCol.z = tempColourData[2] / 255.0f;
+
+		colours->at(i) = tempCol;
+	}
+
 	return true;
 }

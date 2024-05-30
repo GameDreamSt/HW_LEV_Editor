@@ -1,12 +1,8 @@
 #pragma once
 
-#include <LevReader.h>
-#include <LevData.h>
-
-#include <ModelLoader.h>
-#include <TGA_IO.h>
-
 #include <string>
+
+class HWTerrain;
 
 using namespace std;
 
@@ -16,3 +12,4 @@ using namespace std;
 
 void ImportFromObj(HWTerrain* myTerrain, string path);
 bool ImportFromTga(HWTerrain* myTerrain, string path);
+bool ImportPaletteFromImage(string filepath);
