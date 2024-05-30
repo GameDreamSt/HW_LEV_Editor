@@ -1,6 +1,7 @@
 
 #include <iostream>
 #include <string>
+#include <Windows.h>
 
 #include <Files.h>
 #include <LevReader.h>
@@ -149,6 +150,8 @@ void PrintCredits()
 
 int main(int argc, char* argv[])
 {
+	SetConsoleTitle(TEXT("Hostile Waters .LEV Editor - Version 2024-05-30"));
+
 	string path = "";
 
 	// Command line
@@ -221,8 +224,8 @@ int main(int argc, char* argv[])
 			<< "8. Import strata info from .rok (not used right now)\n"
 			<< "9. Import palette from .tga\n\n"
 
-			<< "9. Credits\n"
-			<< "10. Quit\n";
+			<< "10. Credits\n"
+			<< "11. Quit\n";
 
 		int choice = -1;
 		cin >> choice;
